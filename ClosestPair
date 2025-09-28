@@ -1,0 +1,69 @@
+import java.util.Arrays;
+
+class Point implements Comparable<Point> {
+    int x, y;
+    Point(int x, int y) { this.x = x; this.y = y; }
+    public int compareTo(Point other) {
+        return Integer.compare(this.x, other.x);
+    }
+}
+
+public class ClosestPair {
+    public static double closestPair(Point[] points) {
+        Point[] px = points.clone();
+        Arrays.sort(px);
+        Point[] py = px.clone();
+        return closest(px, py, 0, px.length - 1);
+    }
+
+    private static double closest(Point[] px, Point[] py, int left, int right) {
+        if (right - left <= 3) return bruteForce(px, left, right);
+        int mid = (left + right) / 2;
+        Point midPoint = px[mid];
+        Point[] pyl = new Point[mid - left + 1];
+        Point[] pyr = new Point[right - mid];
+        int li = 0, ri = 0;
+        for (int i = 0; i < py.length; i++) {
+            if (py[i].x <= midPoint.x) pyl[li++] = py[i];
+            else pyr[ri++] = py[i];
+        }
+        double dl = closest(px, pyl, left, mid);
+        double dr = closest(px, pyr, mid + 1, right);
+        double d = Math.min(dl, dr);
+        return Math.min(d, stripClosest(py, midPoint.x, d));
+    }
+
+    private static double bruteForce(Point[] p, int left, int right) {
+        double min = Double.MAX_VALUE;
+        for (int i = left; i <= right; i++) {
+            for (int j = i + 1; j <= right; j++) {
+                min = Math.min(min, dist(p[i], p[j]));
+            }
+        }
+        return min;
+    }
+
+    private static double stripClosest(Point[] py, int midx, double d) {
+        Point[] strip = new Point[py.length];
+        int count = 0;
+        for (Point p : py) if (Math.abs(p.x - midx) < d) strip[count++] = p;
+        double min = d;
+        for (int i = 0; i < count; i++) {
+            for (int j = i + 1; j < count && (strip[j].y - strip[i].y) < min; j++) {
+                min = Math.min(min, dist(strip[i], strip[j]));
+            }
+        }
+        return min;
+    }
+
+    private static double dist(Point p1, Point p2) {
+        return Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) +
+                (p1.y - p2.y) * (p1.y - p2.y));
+    }
+
+    public static void main(String[] args) {
+        Point[] points = {new Point(2, 3), new Point(12, 30), new Point(40, 50),
+                new Point(5, 1), new Point(12, 10), new Point(3, 4)};
+        System.out.println("Closest distance: " + closestPair(points));
+    }
+}
